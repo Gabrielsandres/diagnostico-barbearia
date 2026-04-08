@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diagnóstico de Maturidade — Barbearia</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #111;
+      color: #e5e5e5;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 24px 16px 60px;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header { margin-bottom: 32px; }
+    .header h1 { font-size: 1.6rem; font-weight: 700; color: #fff; margin-bottom: 6px; }
+    .header p { font-size: 0.9rem; color: #888; }
+
+    /* Area card */
+    .area-card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 14px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .area-card.active { border-color: #3a3a3a; }
+
+    .area-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 20px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .area-header:hover { background: #202020; }
+
+    .area-tag {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .tag-comercial   { background: #1e3a5f; color: #60a5fa; }
+    .tag-retencao    { background: #1a3a2a; color: #4ade80; }
+    .tag-marketing   { background: #3a2a10; color: #fbbf24; }
+    .tag-financeiro  { background: #3a1a1a; color: #f87171; }
+
+    .area-title {
+      flex: 1;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .area-score-badge {
+      font-size: 0.8rem;
+      color: #666;
+      margin-right: 6px;
+    }
+
+    .chevron {
+      color: #555;
+      font-size: 1rem;
+      transition: transform 0.25s;
+    }
+    .area-card.active .chevron { transform: rotate(90deg); }
+
+    /* Questions panel */
+    .area-body {
+      display: none;
+      padding: 0 20px 20px;
+      border-top: 1px solid #222;
+    }
+    .area-card.active .area-body { display: block; }
+
+    .question-block { margin-top: 22px; }
+    .question-label {
+      font-size: 0.88rem;
+      color: #bbb;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .question-label strong { color: #e0e0e0; }
+
+    .options-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .option-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: #222;
+      border: 1.5px solid #2e2e2e;
+      border-radius: 10px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .option-item:hover { background: #272727; border-color: #444; }
+    .option-item.selected { border-color: #555; background: #2a2a2a; }
+
+    .option-item input[type="radio"] { display: none; }
+
+    .option-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid #444;
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .option-item.selected .option-dot {
+      background: #fff;
+      border-color: #fff;
+    }
+
+    .option-text { font-size: 0.83rem; color: #bbb; line-height: 1.45; }
+    .option-item.selected .option-text { color: #e5e5e5; }
+
+    /* Progress section */
+    .maturity-section {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .maturity-section h3 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 18px;
+    }
+
+    .progress-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .progress-label {
+      width: 110px;
+      flex-shrink: 0;
+      font-size: 0.82rem;
+      color: #aaa;
+    }
+    .progress-bar-wrap {
+      flex: 1;
+      height: 6px;
+      background: #2a2a2a;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 10px;
+      background: #fff;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+    .progress-pct {
+      width: 32px;
+      text-align: right;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #666;
+    }
+
+    /* CTA Button */
+    .btn-analyze {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      background: #fff;
+      color: #111;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-bottom: 20px;
+    }
+    .btn-analyze:hover { opacity: 0.88; }
+    .btn-analyze:disabled { opacity: 0.4; cursor: default; }
+
+    /* WhatsApp button */
+    .btn-whatsapp {
+      width: 100%;
+      padding: 15px;
+      border: 1.5px solid #25d366;
+      border-radius: 12px;
+      background: transparent;
+      color: #25d366;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: background 0.2s, color 0.2s;
+      margin-bottom: 20px;
+    }
+    .btn-whatsapp:hover { background: #25d366; color: #111; }
+
+    /* Analysis result */
+    .analysis-panel {
+      display: none;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 14px;
+      padding: 22px;
+      margin-top: 4px;
+    }
+    .analysis-panel.visible { display: block; }
+
+    .analysis-panel h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 18px;
+    }
+
+    .analysis-item {
+      margin-bottom: 18px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid #252525;
+    }
+    .analysis-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+    .analysis-area-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .analysis-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-red    { background: #f87171; }
+    .dot-orange { background: #fbbf24; }
+    .dot-green  { background: #4ade80; }
+
+    .analysis-area-name strong { font-size: 0.9rem; color: #e0e0e0; }
+    .analysis-pct-label { font-size: 0.8rem; color: #666; margin-left: auto; }
+
+    .analysis-text { font-size: 0.82rem; color: #999; line-height: 1.55; }
+    .analysis-highlight { color: #e5e5e5; font-weight: 500; }
+
+    .priority-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-bottom: 6px;
+    }
+    .badge-high   { background: #3a1a1a; color: #f87171; }
+    .badge-medium { background: #3a2a10; color: #fbbf24; }
+    .badge-low    { background: #1a3a2a; color: #4ade80; }
+
+    /* Footer note */
+    .footer-note {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #555;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>Diagnóstico de Maturidade</h1>
+    <p>Barbearia — preencha junto com o gestor durante a entrevista</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ÁREA 1: COMERCIAL / CAPTAÇÃO -->
+  <!-- ============================================================ -->
+  <div class="area-card" id="card-comercial">
+    <div class="area-header" onclick="toggleCard('comercial')">
+      <span class="area-tag tag-comercial">Comercial</span>
+      <span class="area-title">Captação e conversão</span>
+      <span class="area-score-badge" id="score-label-comercial"></span>
+      <span class="chevron">›</span>
+    </div>
+    <div class="area-body">
+
+      <div class="question-block">
+        <p class="question-label"><strong>1.</strong> Como novos clientes chegam hoje na barbearia?</p>
+        <div class="options-grid" id="q-comercial-1">
+          <label class="option-item" data-area="comercial" data-q="1" data-val="0">
+            <input type="radio" name="comercial-1" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">Só indicação boca a boca, sem nenhuma ação ativa</span>
+          </label>
+          <label class="option-item" data-area="comercial" data-q="1" data-val="1">
+            <input type="radio" name="comercial-1" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">Indicação + presença básica no Instagram (posts eventuais)</span>
+          </label>
+          <label class="option-item" data-area="comercial" data-q="1" data-val="2">
+            <input type="radio" name="comercial-1" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">Instagram ativo + Google Meu Negócio configurado</span>
+          </label>
+          <label class="option-item" data-area="comercial" data-q="1" data-val="3">
+            <input type="radio" name="comercial-1" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">Múltiplos canais com rastreamento (anúncios, parceiros, tráfego pago)</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <p class="question-label"><strong>2.</strong> Vocês sabem de onde vêm os clientes novos?</p>
+        <div class="options-grid" id="q-comercial-2">
+          <label class="option-item" data-area="comercial" data-q="2" data-val="0">
+            <input type="radio" name="comercial-2" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">Não temos nenhum controle</span>
+          </label>
+          <label class="option-item" data-area="comercial" data-q="2" data-val="1">
+            <input type="radio" name="comercial-2" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">Perguntamos na hora, mas não registramos</span>
+          </label>
+          <label class="option-item" data-area="comercial" data-q="2" data-val="2">
+            <input type="radio" name="comercial-2" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">Registramos de forma básica no sistema</span>
+          </label>
+          <label class="option-item" data-area="comercial" data-q="2" data-val="3">
+            <input type="radio" name="comercial-2" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">Rastreamos e analisamos periodicamente por canal</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <p class="question-label"><strong>3.</strong> Existe alguma oferta ou processo para converter cliente novo em recorrente?</p>
+        <div class="options-grid" id="q-comercial-3">
+          <label class="option-item" data-area="comercial" data-q="3" data-val="0">
+            <input type="radio" name="comercial-3" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">Não, ele vem, é atendido e vai embora</span>
+          </label>
+          <label class="option-item" data-area="comercial" data-q="3" data-val="1">
+            <input type="radio" name="comercial-3" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">Às vezes oferecemos algo, mas sem padrão</span>
+          </label>
+          <label class="option-item" data-area="comercial" data-q="3" data-val="2">
+            <input type="radio" name="comercial-3" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">Temos uma abordagem, mas não é sistemática</span>
+          </label>
+          <label class="option-item" data-area="comercial" data-q="3" data-val="3">
+            <input type="radio" name="comercial-3" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">Processo estruturado: oferta de entrada + agendamento já marcado</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <p class="question-label"><strong>4.</strong> Vocês acompanham quantos clientes novos entram por mês?</p>
+        <div class="options-grid" id="q-comercial-4">
+          <label class="option-item" data-area="comercial" data-q="4" data-val="0">
+            <input type="radio" name="comercial-4" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">Não acompanhamos</span>
+          </label>
+          <label class="option-item" data-area="comercial" data-q="4" data-val="1">
+            <input type="radio" name="comercial-4" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">Sabemos de cabeça, mas sem meta definida</span>
+          </label>
+          <label class="option-item" data-area="comercial" data-q="4" data-val="2">
+            <input type="radio" name="comercial-4" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">Temos o número registrado, mas sem meta</span>
+          </label>
+          <label class="option-item" data-area="comercial" data-q="4" data-val="3">
+            <input type="radio" name="comercial-4" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">Meta clara, acompanhamos semanalmente e tomamos ação</span>
+          </label>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ÁREA 2: RETENÇÃO / FOLLOW-UP -->
+  <!-- ============================================================ -->
+  <div class="area-card" id="card-retencao">
+    <div class="area-header" onclick="toggleCard('retencao')">
+      <span class="area-tag tag-retencao">Retenção</span>
+      <span class="area-title">Retenção e follow-up</span>
+      <span class="area-score-badge" id="score-label-retencao"></span>
+      <span class="chevron">›</span>
+    </div>
+    <div class="area-body">
+
+      <div class="question-block">
+        <p class="question-label"><strong>1.</strong> Com que frequência o cliente médio volta à barbearia?</p>
+        <div class="options-grid" id="q-retencao-1">
+          <label class="option-item" data-area="retencao" data-q="1" data-val="0">
+            <input type="radio" name="retencao-1" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">Não sabemos, não temos controle</span>
+          </label>
+          <label class="option-item" data-area="retencao" data-q="1" data-val="1">
+            <input type="radio" name="retencao-1" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">Sabemos por intuição, mas sem dados</span>
+          </label>
+          <label class="option-item" data-area="retencao" data-q="1" data-val="2">
+            <input type="radio" name="retencao-1" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">Temos uma estimativa baseada no histórico</span>
+          </label>
+          <label class="option-item" data-area="retencao" data-q="1" data-val="3">
+            <input type="radio" name="retencao-1" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">Acompanhamos intervalo por cliente individualmente</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <p class="question-label"><strong>2.</strong> Vocês fazem algum contato ativo com clientes que sumiram?</p>
+        <div class="options-grid" id="q-retencao-2">
+          <label class="option-item" data-area="retencao" data-q="2" data-val="0">
+            <input type="radio" name="retencao-2" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">Não fazemos nada, esperamos eles voltarem</span>
+          </label>
+          <label class="option-item" data-area="retencao" data-q="2" data-val="1">
+            <input type="radio" name="retencao-2" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">Às vezes mandamos mensagem manual no WhatsApp</span>
+          </label>
+          <label class="option-item" data-area="retencao" data-q="2" data-val="2">
+            <input type="radio" name="retencao-2" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">Temos uma régua básica, mas é feita manualmente</span>
+          </label>
+          <label class="option-item" data-area="retencao" data-q="2" data-val="3">
+            <input type="radio" name="retencao-2" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">Automação de reativação ativa — disparo por tempo de ausência</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <p class="question-label"><strong>3.</strong> Existe programa de fidelidade ou assinatura mensal?</p>
+        <div class="options-grid" id="q-retencao-3">
+          <label class="option-item" data-area="retencao" data-q="3" data-val="0">
+            <input type="radio" name="retencao-3" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">Não existe nenhum programa</span>
+          </label>
+          <label class="option-item" data-area="retencao" data-q="3" data-val="1">
+            <input type="radio" name="retencao-3" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">Existe informalmente (ex: cartão papel de carimbos)</span>
+          </label>
+          <label class="option-item" data-area="retencao" data-q="3" data-val="2">
+            <input type="radio" name="retencao-3" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">Existe, mas poucos clientes aderem ou usam</span>
+          </label>
+          <label class="option-item" data-area="retencao" data-q="3" data-val="3">
+            <input type="radio" name="retencao-3" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">Assinatura ativa com clientes recorrentes e receita previsível</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <p class="question-label"><strong>4.</strong> Vocês sabem quais clientes estão em risco de não voltar?</p>
+        <div class="options-grid" id="q-retencao-4">
+          <label class="option-item" data-area="retencao" data-q="4" data-val="0">
+            <input type="radio" name="retencao-4" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">Não sabemos</span>
+          </label>
+          <label class="option-item" data-area="retencao" data-q="4" data-val="1">
+            <input type="radio" name="retencao-4" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">O barbeiro percebe na intuição, mas sem dado</span>
+          </label>
+          <label class="option-item" data-area="retencao" data-q="4" data-val="2">
+            <input type="radio" name="retencao-4" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">Olhamos o histórico às vezes, sem processo</span>
+          </label>
+          <label class="option-item" data-area="retencao" data-q="4" data-val="3">
+            <input type="radio" name="retencao-4" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">Monitoramos ativamente e agimos antes do cliente sumir</span>
+          </label>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ÁREA 3: MARKETING / MÍDIAS -->
+  <!-- ============================================================ -->
+  <div class="area-card" id="card-marketing">
+    <div class="area-header" onclick="toggleCard('marketing')">
+      <span class="area-tag tag-marketing">Marketing</span>
+      <span class="area-title">Marketing e mídias</span>
+      <span class="area-score-badge" id="score-label-marketing"></span>
+      <span class="chevron">›</span>
+    </div>
+    <div class="area-body">
+
+      <div class="question-block">
+        <p class="question-label"><strong>1.</strong> Com que frequência publicam no Instagram?</p>
+        <div class="options-grid" id="q-marketing-1">
+          <label class="option-item" data-area="marketing" data-q="1" data-val="0">
+            <input type="radio" name="marketing-1" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">Raramente ou nunca</span>
+          </label>
+          <label class="option-item" data-area="marketing" data-q="1" data-val="1">
+            <input type="radio" name="marketing-1" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">1–2x por semana quando lembra</span>
+          </label>
+          <label class="option-item" data-area="marketing" data-q="1" data-val="2">
+            <input type="radio" name="marketing-1" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">3–4x por semana com algum planejamento</span>
+          </label>
+          <label class="option-item" data-area="marketing" data-q="1" data-val="3">
+            <input type="radio" name="marketing-1" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">Todos os dias, com calendário editorial definido</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <p class="question-label"><strong>2.</strong> Usam anúncios pagos (Meta Ads, Google Ads)?</p>
+        <div class="options-grid" id="q-marketing-2">
+          <label class="option-item" data-area="marketing" data-q="2" data-val="0">
+            <input type="radio" name="marketing-2" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">Nunca usamos</span>
+          </label>
+          <label class="option-item" data-area="marketing" data-q="2" data-val="1">
+            <input type="radio" name="marketing-2" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">Já tentamos, mas sem estratégia ou resultado claro</span>
+          </label>
+          <label class="option-item" data-area="marketing" data-q="2" data-val="2">
+            <input type="radio" name="marketing-2" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">Usamos com alguma regularidade</span>
+          </label>
+          <label class="option-item" data-area="marketing" data-q="2" data-val="3">
+            <input type="radio" name="marketing-2" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">Campanhas ativas com acompanhamento de métricas e ROI</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <p class="question-label"><strong>3.</strong> Como vocês respondem mensagens e comentários?</p>
+        <div class="options-grid" id="q-marketing-3">
+          <label class="option-item" data-area="marketing" data-q="3" data-val="0">
+            <input type="radio" name="marketing-3" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">Demora muito ou não responde</span>
+          </label>
+          <label class="option-item" data-area="marketing" data-q="3" data-val="1">
+            <input type="radio" name="marketing-3" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">Responde quando lembra, sem padrão ou tempo definido</span>
+          </label>
+          <label class="option-item" data-area="marketing" data-q="3" data-val="2">
+            <input type="radio" name="marketing-3" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">Responde no mesmo dia na maioria dos casos</span>
+          </label>
+          <label class="option-item" data-area="marketing" data-q="3" data-val="3">
+            <input type="radio" name="marketing-3" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">Resposta rápida com processo definido, usa automação</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <p class="question-label"><strong>4.</strong> Como é o processo de produção de conteúdo?</p>
+        <div class="options-grid" id="q-marketing-4">
+          <label class="option-item" data-area="marketing" data-q="4" data-val="0">
+            <input type="radio" name="marketing-4" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">Sem processo, é no improviso</span>
+          </label>
+          <label class="option-item" data-area="marketing" data-q="4" data-val="1">
+            <input type="radio" name="marketing-4" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">Um barbeiro posta quando quer, sem padrão</span>
+          </label>
+          <label class="option-item" data-area="marketing" data-q="4" data-val="2">
+            <input type="radio" name="marketing-4" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">Alguém é responsável, mas sem calendário editorial</span>
+          </label>
+          <label class="option-item" data-area="marketing" data-q="4" data-val="3">
+            <input type="radio" name="marketing-4" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">Calendário editorial definido, responsável claro, conteúdo planejado</span>
+          </label>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ÁREA 4: FINANCEIRO / PREVISIBILIDADE -->
+  <!-- ============================================================ -->
+  <div class="area-card" id="card-financeiro">
+    <div class="area-header" onclick="toggleCard('financeiro')">
+      <span class="area-tag tag-financeiro">Financeiro</span>
+      <span class="area-title">Gestão e previsibilidade</span>
+      <span class="area-score-badge" id="score-label-financeiro"></span>
+      <span class="chevron">›</span>
+    </div>
+    <div class="area-body">
+
+      <div class="question-block">
+        <p class="question-label"><strong>1.</strong> Vocês têm meta de faturamento mensal?</p>
+        <div class="options-grid" id="q-financeiro-1">
+          <label class="option-item" data-area="financeiro" data-q="1" data-val="0">
+            <input type="radio" name="financeiro-1" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">Não temos meta</span>
+          </label>
+          <label class="option-item" data-area="financeiro" data-q="1" data-val="1">
+            <input type="radio" name="financeiro-1" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">Temos na cabeça, mas não está escrito em lugar nenhum</span>
+          </label>
+          <label class="option-item" data-area="financeiro" data-q="1" data-val="2">
+            <input type="radio" name="financeiro-1" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">Meta escrita, mas não acompanhamos com frequência</span>
+          </label>
+          <label class="option-item" data-area="financeiro" data-q="1" data-val="3">
+            <input type="radio" name="financeiro-1" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">Meta clara, acompanhamos semanalmente e tomamos ação</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <p class="question-label"><strong>2.</strong> Sabem o ticket médio por serviço e por barbeiro?</p>
+        <div class="options-grid" id="q-financeiro-2">
+          <label class="option-item" data-area="financeiro" data-q="2" data-val="0">
+            <input type="radio" name="financeiro-2" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">Não sabemos</span>
+          </label>
+          <label class="option-item" data-area="financeiro" data-q="2" data-val="1">
+            <input type="radio" name="financeiro-2" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">Sabemos o geral, mas não quebrado por barbeiro</span>
+          </label>
+          <label class="option-item" data-area="financeiro" data-q="2" data-val="2">
+            <input type="radio" name="financeiro-2" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">Temos os dados no sistema, mas não analisamos</span>
+          </label>
+          <label class="option-item" data-area="financeiro" data-q="2" data-val="3">
+            <input type="radio" name="financeiro-2" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">Analisamos por barbeiro e usamos para decisões e metas</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <p class="question-label"><strong>3.</strong> Têm previsibilidade de quanto vão faturar no próximo mês?</p>
+        <div class="options-grid" id="q-financeiro-3">
+          <label class="option-item" data-area="financeiro" data-q="3" data-val="0">
+            <input type="radio" name="financeiro-3" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">Nenhuma previsibilidade — só sabemos no fim do mês</span>
+          </label>
+          <label class="option-item" data-area="financeiro" data-q="3" data-val="1">
+            <input type="radio" name="financeiro-3" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">Uma estimativa muito por cima</span>
+          </label>
+          <label class="option-item" data-area="financeiro" data-q="3" data-val="2">
+            <input type="radio" name="financeiro-3" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">Conseguimos estimar com certa precisão</span>
+          </label>
+          <label class="option-item" data-area="financeiro" data-q="3" data-val="3">
+            <input type="radio" name="financeiro-3" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">Alta previsibilidade baseada em dados históricos e agenda</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <p class="question-label"><strong>4.</strong> Como é o controle financeiro da barbearia?</p>
+        <div class="options-grid" id="q-financeiro-4">
+          <label class="option-item" data-area="financeiro" data-q="4" data-val="0">
+            <input type="radio" name="financeiro-4" value="0">
+            <span class="option-dot"></span>
+            <span class="option-text">No papel, na cabeça ou em nenhum lugar</span>
+          </label>
+          <label class="option-item" data-area="financeiro" data-q="4" data-val="1">
+            <input type="radio" name="financeiro-4" value="1">
+            <span class="option-dot"></span>
+            <span class="option-text">Planilha básica ou anotações no celular</span>
+          </label>
+          <label class="option-item" data-area="financeiro" data-q="4" data-val="2">
+            <input type="radio" name="financeiro-4" value="2">
+            <span class="option-dot"></span>
+            <span class="option-text">No sistema, mas sem revisão ou análise periódica</span>
+          </label>
+          <label class="option-item" data-area="financeiro" data-q="4" data-val="3">
+            <input type="radio" name="financeiro-4" value="3">
+            <span class="option-dot"></span>
+            <span class="option-text">No sistema, com análise periódica e tomada de decisão baseada em dados</span>
+          </label>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MATURIDADE POR ÁREA -->
+  <!-- ============================================================ -->
+  <div class="maturity-section">
+    <h3>Maturidade por área</h3>
+
+    <div class="progress-row">
+      <span class="progress-label">Comercial</span>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="bar-comercial"></div></div>
+      <span class="progress-pct" id="pct-comercial">0%</span>
+    </div>
+    <div class="progress-row">
+      <span class="progress-label">Retenção</span>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="bar-retencao"></div></div>
+      <span class="progress-pct" id="pct-retencao">0%</span>
+    </div>
+    <div class="progress-row">
+      <span class="progress-label">Marketing</span>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="bar-marketing"></div></div>
+      <span class="progress-pct" id="pct-marketing">0%</span>
+    </div>
+    <div class="progress-row">
+      <span class="progress-label">Financeiro</span>
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="bar-financeiro"></div></div>
+      <span class="progress-pct" id="pct-financeiro">0%</span>
+    </div>
+  </div>
+
+  <button class="btn-analyze" id="btn-analyze" onclick="generateAnalysis()">
+    Gerar análise de gargalos ↗
+  </button>
+
+  <button class="btn-whatsapp" id="btn-whatsapp" onclick="sendWhatsApp()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+    Enviar resultados
+  </button>
+
+  <!-- ============================================================ -->
+  <!-- PAINEL DE ANÁLISE -->
+  <!-- ============================================================ -->
+  <div class="analysis-panel" id="analysis-panel">
+    <h3>📊 Análise de gargalos e prioridades</h3>
+    <div id="analysis-content"></div>
+  </div>
+
+  <p class="footer-note">Diagnóstico desenvolvido por BarberOn LTDA · Projeto IA First para Barbearias</p>
+
+</div>
+
+<script>
+  // ──────────────────────────────────────────────
+  // State
+  // ──────────────────────────────────────────────
+  const scores = { comercial: {}, retencao: {}, marketing: {}, financeiro: {} };
+  const MAX_SCORE_PER_AREA = 4 * 3; // 4 perguntas × máximo 3 pontos
+
+  const areaLabels = {
+    comercial: 'Comercial / Captação',
+    retencao:  'Retenção / Follow-up',
+    marketing: 'Marketing / Mídias',
+    financeiro: 'Financeiro / Previsibilidade'
+  };
+
+  const areaInsights = {
+    comercial: {
+      low:  'Captação hoje é 100% passiva. Nenhum processo ativo. Oportunidade imediata: estruturar uma oferta de entrada e rastrear a origem dos clientes novos.',
+      mid:  'A barbearia tem presença, mas sem processo de conversão. O próximo passo é criar uma jornada do cliente novo: captura → agendamento → recorrência.',
+      high: 'Captação já tem estrutura. O foco deve ser otimização e escala — testar novos canais e aumentar a taxa de conversão de novo em recorrente.'
+    },
+    retencao: {
+      low:  'Gargalo crítico. Clientes somem e ninguém age. A reativação automática via WhatsApp é o quickwin de maior ROI imediato — pode aumentar o faturamento em semanas.',
+      mid:  'Existe alguma consciência, mas sem automação. Implementar uma régua de reativação e um programa de assinatura pode dobrar a recorrência.',
+      high: 'Retenção está madura. Próximo nível: usar dados preditivos para agir antes do cliente sumir, não depois.'
+    },
+    marketing: {
+      low:  'Sem presença ativa. Instagram inconsistente e sem processo. Prioridade: criar um calendário editorial básico e usar IA para gerar conteúdo com frequência.',
+      mid:  'Há esforço, mas sem consistência. Automação de conteúdo e gestão de DMs pode triplicar o alcance sem aumentar o trabalho manual.',
+      high: 'Marketing já roda. O próximo passo é conectar as mídias ao funil de vendas e criar campanhas de reativação pagas.'
+    },
+    financeiro: {
+      low:  'Zero previsibilidade. Gestão no escuro. Antes de qualquer IA, precisamos de dados básicos: meta mensal, ticket médio por barbeiro, DRE simples.',
+      mid:  'Dados existem, mas não são usados. O trabalho é criar o hábito de análise semanal com um dashboard simples.',
+      high: 'Financeiro maduro. Próximo passo: usar previsão de demanda com IA para otimizar a agenda e maximizar o faturamento por cadeira.'
+    }
+  };
+
+  // ──────────────────────────────────────────────
+  // Question labels (for WhatsApp message)
+  // ──────────────────────────────────────────────
+  const questionLabels = {
+    comercial: [
+      'Como novos clientes chegam hoje?',
+      'Sabem de onde vêm os clientes novos?',
+      'Oferta ou processo para converter cliente novo em recorrente?',
+      'Acompanham clientes novos por mês?'
+    ],
+    retencao: [
+      'Frequência de retorno do cliente médio?',
+      'Fazem contato ativo com clientes que sumiram?',
+      'Existe programa de fidelidade ou assinatura?',
+      'Sabem quais clientes estão em risco de não voltar?'
+    ],
+    marketing: [
+      'Frequência de publicações no Instagram?',
+      'Usam anúncios pagos?',
+      'Como respondem mensagens e comentários?',
+      'Processo de produção de conteúdo?'
+    ],
+    financeiro: [
+      'Têm meta de faturamento mensal?',
+      'Sabem o ticket médio por barbeiro?',
+      'Previsibilidade de faturamento do próximo mês?',
+      'Como é o controle financeiro?'
+    ]
+  };
+
+  const optionTexts = {
+    comercial: {
+      1: ['Só boca a boca, sem ação ativa','Indicação + Instagram básico','Instagram + Google Meu Negócio','Múltiplos canais com rastreamento'],
+      2: ['Sem nenhum controle','Pergunta mas não registra','Registra de forma básica','Rastreia e analisa por canal'],
+      3: ['Ele vem, é atendido e vai','Às vezes oferecem algo, sem padrão','Abordagem existe, mas não é sistemática','Processo estruturado de conversão'],
+      4: ['Não acompanha','Sabe de cabeça, sem meta','Tem o número, sem meta','Meta clara com acompanhamento semanal']
+    },
+    retencao: {
+      1: ['Não sabe','Intuição, sem dado','Estimativa pelo histórico','Acompanha por cliente individualmente'],
+      2: ['Não faz nada','Mensagem manual às vezes','Régua básica, mas manual','Automação de reativação ativa'],
+      3: ['Não existe','Programa informal (cartão papel)','Existe, mas poucos usam','Assinatura ativa com recorrência'],
+      4: ['Não sabe','Intuição do barbeiro','Olha o histórico às vezes','Monitora e age ativamente']
+    },
+    marketing: {
+      1: ['Raramente ou nunca','1–2x/semana quando lembra','3–4x/semana com planejamento','Diário com calendário editorial'],
+      2: ['Nunca usou','Já tentou, sem resultado claro','Usa com alguma regularidade','Campanhas ativas com métricas'],
+      3: ['Demora muito ou não responde','Responde quando lembra','Responde no mesmo dia','Resposta rápida com automação'],
+      4: ['Sem processo, no improviso','Um barbeiro posta quando quer','Tem responsável, sem calendário','Calendário editorial definido']
+    },
+    financeiro: {
+      1: ['Sem meta','Meta na cabeça, não escrita','Meta escrita, não acompanhada','Meta clara com acompanhamento semanal'],
+      2: ['Não sabe','Sabe o geral, não por barbeiro','Tem dados, não analisa','Analisa por barbeiro para decisões'],
+      3: ['Nenhuma previsibilidade','Estimativa muito por cima','Estimativa com certa precisão','Alta previsibilidade por dados'],
+      4: ['No papel ou na cabeça','Planilha básica','No sistema sem análise','No sistema com análise periódica']
+    }
+  };
+
+  // ──────────────────────────────────────────────
+  // Send WhatsApp
+  // ──────────────────────────────────────────────
+  function sendWhatsApp() {
+    const areas = ['comercial', 'retencao', 'marketing', 'financeiro'];
+    const totalAnswered = areas.reduce((acc, a) => acc + Object.keys(scores[a]).length, 0);
+
+    if (totalAnswered < 8) {
+      alert('Preencha pelo menos 2 perguntas em cada área antes de enviar.');
+      return;
+    }
+
+    let msg = '📋 *Diagnóstico de Maturidade — Barbearia*\n\n';
+
+    areas.forEach(area => {
+      const vals  = Object.values(scores[area]);
+      const total = vals.reduce((a, b) => a + b, 0);
+      const pct   = vals.length ? Math.round((total / MAX_SCORE_PER_AREA) * 100) : 0;
+
+      msg += `*${areaLabels[area]}* — ${pct}% de maturidade\n`;
+
+      const qs = scores[area];
+      for (let q = 1; q <= 4; q++) {
+        if (qs[q] !== undefined) {
+          const label = questionLabels[area][q - 1];
+          const answer = optionTexts[area][q][qs[q]];
+          msg += `  ${q}. ${label}\n     → ${answer}\n`;
+        }
+      }
+      msg += '\n';
+    });
+
+    // Overall
+    const allVals = areas.flatMap(a => Object.values(scores[a]));
+    const overallPct = allVals.length
+      ? Math.round((allVals.reduce((a,b)=>a+b,0) / (areas.length * MAX_SCORE_PER_AREA)) * 100)
+      : 0;
+
+    const sorted = areas.map(area => {
+      const v = Object.values(scores[area]);
+      const t = v.reduce((a,b)=>a+b,0);
+      return { area, pct: v.length ? Math.round((t/MAX_SCORE_PER_AREA)*100) : 100 };
+    }).sort((a,b) => a.pct - b.pct);
+
+    msg += `📊 *Maturidade geral:* ${overallPct}%\n`;
+    msg += `⚠️ *Maior gargalo:* ${areaLabels[sorted[0].area]} (${sorted[0].pct}%)\n`;
+    msg += `\n_Diagnóstico preenchido pelo gestor da barbearia_`;
+
+    const phone = '5561992453936';
+    const url   = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+  }
+
+  // ──────────────────────────────────────────────
+  // Toggle area card
+  // ──────────────────────────────────────────────
+  function toggleCard(area) {
+    const card = document.getElementById('card-' + area);
+    card.classList.toggle('active');
+  }
+
+  // ──────────────────────────────────────────────
+  // Option selection
+  // ──────────────────────────────────────────────
+  document.querySelectorAll('.option-item').forEach(item => {
+    item.addEventListener('click', function () {
+      const area = this.dataset.area;
+      const q    = this.dataset.q;
+      const val  = parseInt(this.dataset.val);
+
+      // Deselect siblings
+      const name = area + '-' + q;
+      document.querySelectorAll(`[data-area="${area}"][data-q="${q}"]`).forEach(el => {
+        el.classList.remove('selected');
+      });
+
+      // Select this
+      this.classList.add('selected');
+      this.querySelector('input').checked = true;
+
+      // Record score
+      scores[area][q] = val;
+
+      // Update progress
+      updateProgress(area);
+    });
+  });
+
+  // ──────────────────────────────────────────────
+  // Update progress bar
+  // ──────────────────────────────────────────────
+  function updateProgress(area) {
+    const vals = Object.values(scores[area]);
+    const total = vals.reduce((a, b) => a + b, 0);
+    const pct = Math.round((total / MAX_SCORE_PER_AREA) * 100);
+
+    document.getElementById('bar-' + area).style.width = pct + '%';
+    document.getElementById('pct-' + area).textContent = pct + '%';
+
+    // Update badge inside header
+    const answered = vals.length;
+    const badge = document.getElementById('score-label-' + area);
+    badge.textContent = answered > 0 ? pct + '%' : '';
+  }
+
+  // ──────────────────────────────────────────────
+  // Generate analysis
+  // ──────────────────────────────────────────────
+  function generateAnalysis() {
+    const areas = ['comercial', 'retencao', 'marketing', 'financeiro'];
+    const results = areas.map(area => {
+      const vals  = Object.values(scores[area]);
+      const total = vals.reduce((a, b) => a + b, 0);
+      const pct   = Math.round((total / MAX_SCORE_PER_AREA) * 100);
+      return { area, pct, answered: vals.length };
+    });
+
+    const totalAnswered = results.reduce((a, r) => a + r.answered, 0);
+    if (totalAnswered < 8) {
+      alert('Preencha pelo menos 2 perguntas em cada área para gerar a análise.');
+      return;
+    }
+
+    // Sort: lowest first
+    results.sort((a, b) => a.pct - b.pct);
+
+    let html = '';
+    results.forEach((r, i) => {
+      const level = r.pct < 40 ? 'low' : r.pct < 70 ? 'mid' : 'high';
+      const dotClass = r.pct < 40 ? 'dot-red' : r.pct < 70 ? 'dot-orange' : 'dot-green';
+      const badgeClass = r.pct < 40 ? 'badge-high' : r.pct < 70 ? 'badge-medium' : 'badge-low';
+      const priority = r.pct < 40 ? 'Prioridade Alta' : r.pct < 70 ? 'Prioridade Média' : 'Consolidado';
+
+      html += `
+        <div class="analysis-item">
+          <div class="analysis-area-name">
+            <span class="analysis-dot ${dotClass}"></span>
+            <strong>${areaLabels[r.area]}</strong>
+            <span class="analysis-pct-label">${r.pct}% de maturidade</span>
+          </div>
+          <span class="priority-badge ${badgeClass}">${priority}</span>
+          <p class="analysis-text">${areaInsights[r.area][level]}</p>
+        </div>
+      `;
+    });
+
+    // Recommendation
+    const topGap = results[0];
+    const topLabel = areaLabels[topGap.area];
+    html += `
+      <div style="margin-top:18px; padding-top:18px; border-top:1px solid #252525;">
+        <p class="analysis-text">
+          <span class="analysis-highlight">Recomendação de onde começar:</span>
+          Iniciar pela área de <strong style="color:#fff">${topLabel}</strong> —
+          é onde está o maior gap e o maior potencial de impacto imediato em faturamento.
+          A IA entra primeiro aqui.
+        </p>
+      </div>
+    `;
+
+    document.getElementById('analysis-content').innerHTML = html;
+    document.getElementById('analysis-panel').classList.add('visible');
+    document.getElementById('analysis-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+</script>
+</body>
+</html>
